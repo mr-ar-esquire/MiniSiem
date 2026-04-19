@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mini SIEM Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+        }
+
+        h1 { color: #38bdf8; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th, td {
+            border: 1px solid #334155;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th { background: #1e293b; }
+
+        tr:nth-child(even) { background: #020617; }
+
+        .HIGH { color: red; font-weight: bold; }
+        .MEDIUM { color: orange; }
+        .LOW { color: lightgreen; }
+    </style>
+</head>
+
+<body>
+
+<h1>Mini SIEM Dashboard</h1>
+
+<div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center;">
+    <button onclick="loadLogs(); loadAlerts();" style="padding: 10px 15px; background: #38bdf8; border: none; cursor: pointer; color: black; font-weight: bold; border-radius: 5px;">Refresh Data</button>
+    
+    <label for="severityFilter" style="font-weight: bold;">Severity Filter:</label>
+    <select id="severityFilter" onchange="loadAlerts()" style="padding: 10px; border-radius: 5px; background: #1e293b; color: white; border: 1px solid #334155;">
+        <option value="">All Severities</option>
+        <option value="HIGH">HIGH</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="LOW">LOW</option>
+    </select>
+</div>
+
+<h2>Logs</h2>
+<table id="logsTable">
+    <tr>
+        <th>ID</th>
+        <th>Message</th>
+        <th>Source</th>
+        <th>Location</th>
+        <th>Timestamp</th>
+    </tr>
+</table>
+
+<h2>Alerts</h2>
+<table id="alertsTable">
+    <tr>
+        <th>Description</th>
+        <th>Severity</th>
+        <th>Timestamp</th>
+    </tr>
+</table>
+
+<script>
+
+    // 🔹 Load Logs
+    async function loadLogs() {
+        const res = await fetch('/logs');
+        const data = await res.json();
+
+        const table = document.getElementById("logsTable");
+
+        table.innerHTML = `
+        <tr>
+            <th>ID</th>
+            <th>Message</th>
+            <th>Source</th>
+            <th>Location</th>
+            <th>Timestamp</th>
+        </tr>
+    `;
+
+        data.forEach(log => {
+            let row = table.insertRow();
+            row.insertCell(0).innerText = log.id;
+            row.insertCell(1).innerText = log.message;
+            row.insertCell(2).innerText = log.source;
+            row.insertCell(3).innerText = log.location || "Unknown";
+            row.insertCell(4).innerText = log.timestamp;
+        });
+    }
+
+    // 🔹 Load Alerts
+    async function loadAlerts() {
+        const severity = document.getElementById("severityFilter").value;
+        const url = severity ? `/alerts?severity=${severity}` : '/alerts';
+        
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const table = document.getElementById("alertsTable");
+
+        table.innerHTML = `
+        <tr>
+            <th>Description</th>
+            <th>Severity</th>
+            <th>Timestamp</th>
+        </tr>
+    `;
+
+        data.forEach(alert => {
+            let row = table.insertRow();
+            row.insertCell(0).innerText = alert.description;
+            row.insertCell(1).innerText = alert.severity;
+            row.insertCell(2).innerText = alert.timestamp;
+
+            row.className = alert.severity;
+        });
+    }
+
+    // 🔄 Initial load
+    loadLogs();
+    loadAlerts();
+
+    // 🔄 Auto refresh every 3 seconds
+    setInterval(() => {
+        loadLogs();
+        loadAlerts();
+    }, 3000);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+package com.siem.minisiem.model;
+
+import jakarta.persistence.*;
+
+@Entity
+public class Alert {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    private Severity severity;
+    
+    private java.time.LocalDateTime timestamp = java.time.LocalDateTime.now();
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Severity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(Severity severity) {
+        this.severity = severity;
+    }
+
+    public java.time.LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(java.time.LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+}
