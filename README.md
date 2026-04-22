@@ -1,91 +1,153 @@
-# mini-siem
+# MiniSiem
 
-Built this to understand how basic SIEM systems actually work instead of just reading theory.
+A backend-focused SIEM (Security Information and Event Management) system built with Spring Boot.
 
-The idea was simple — take logs, detect suspicious activity, and turn that into something useful.
-
----
-
-## what it does
-
-* accepts logs through APIs (single, batch, or file upload)
-* detects:
-
-  * repeated failed logins (brute force)
-  * basic SQL injection patterns
-  * suspicious endpoints like `/admin`
-* generates alerts with severity (LOW / MEDIUM / HIGH)
-* enriches logs with IP location (GeoIP)
-* stores everything in Elasticsearch for search
-* has a simple dashboard to view logs + alerts
+I built this to understand how real detection systems work under the hood — not just read about them.
+Most SIEM content online explains what they do, not how to actually build one. So I built a small one.
 
 ---
 
-## stack
+## What it does
 
-* Java + Spring Boot
-* H2 database (quick setup)
-* Elasticsearch (log indexing + search)
-* Docker (for ES)
-* MaxMind GeoLite2 (IP → location)
+MiniSiem accepts logs over HTTP, runs them through a detection engine, and generates alerts when
+something looks suspicious. It also tags each log with geographic data based on the source IP.
+
+Detection rules currently cover:
+
+- Brute force: multiple failed login attempts from the same IP within a time window
+- SQL injection: pattern matching against common payloads (' OR 1=1, UNION SELECT, etc.)
+- Suspicious endpoints: requests to paths like /admin, /etc/passwd, /.env
+
+Alerts are categorized as LOW, MEDIUM, or HIGH severity depending on the rule triggered.
+
+Logs are stored in H2 for basic persistence and also indexed in Elasticsearch, which makes it
+possible to query and filter them more flexibly.
+
+There's a basic HTML dashboard at /index.html that shows recent logs and active alerts.
 
 ---
 
-## how to run
+## Tech stack
 
-1. start Elasticsearch (Docker)
-2. run the app:
+- Java 17 + Spring Boot 3
+- H2 (in-memory database, mostly for dev convenience)
+- Elasticsearch 8 (log indexing and search)
+- MaxMind GeoLite2 (IP geolocation)
+- Docker (to run Elasticsearch locally)
 
+---
+
+## Project structure
+src/
+main/
+java/com/minisiem/
+controller/     -- REST endpoints (LogController, AlertController)
+service/        -- detection logic, GeoIP enrichment
+repository/     -- H2 + Elasticsearch repositories
+model/          -- Log, Alert entities
+resources/
+static/         -- dashboard HTML
+application.properties
+---
+
+## How to run
+
+**Prerequisites:**
+- Java 17+
+- Docker (for Elasticsearch)
+- Maven (or use the included wrapper)
+
+**Steps:**
+
+1. Start Elasticsearch:
+
+```bash
+docker run -d --name elasticsearch \
+  -p 9200:9200 -p 9300:9300 \
+  -e "discovery.type=single-node" \
+  docker.elastic.co/elasticsearch/elasticsearch:8.11.0
 ```
+
+2. Run the app:
+
+```bash
+./mvnw spring-boot:run
+# or on Windows:
 .\mvnw.cmd spring-boot:run
 ```
 
-3. open:
+3. Access:
 
-* logs → http://localhost:8080/logs
-* alerts → http://localhost:8080/alerts
-* dashboard → http://localhost:8080/index.html
+| Endpoint | URL |
+|---|---|
+| Dashboard | http://localhost:8080/index.html |
+| Logs | http://localhost:8080/logs |
+| Alerts | http://localhost:8080/alerts |
 
 ---
 
-## example
+## API examples
 
+**Single log:**
+```bash
+curl -X POST http://localhost:8080/logs \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Failed password for root", "source": "192.168.1.10"}'
 ```
-POST /logs
-{
-  "message": "Failed password for admin",
-  "source": "8.8.8.8"
-}
+
+**Batch logs:**
+```bash
+curl -X POST http://localhost:8080/logs/batch \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"message": "Failed password for root", "source": "192.168.1.10"},
+    {"message": "Failed password for admin", "source": "192.168.1.10"}
+  ]'
+```
+
+**File upload:**
+```bash
+curl -X POST http://localhost:8080/logs/upload \
+  -F "file=@sample-logs.txt"
 ```
 
 ---
 
-## geoip note
+## GeoIP note
 
-the GeoLite2 database is included for convenience.
-
-i’m aware this isn’t ideal for production (file size, updates, etc.), but it makes the project easier to run locally without extra setup.
-
----
-
-## why i built this
-
-wanted to understand how systems actually detect attacks instead of just logging data.
-this helped me get a better idea of:
-
-* how detection rules work
-* how logs can be correlated over time
-* how alerts are generated
+The GeoLite2 database file is included directly in the repo. I know that's not ideal (it's large
+and goes stale), but it makes local setup simpler without needing a MaxMind account. If you want
+to keep it updated, you can replace the .mmdb file from MaxMind's download page.
 
 ---
 
-## what i’d improve next
+## Why I built this
 
-* streaming logs using Kafka
-* better detection rules / anomaly detection
-* proper UI instead of basic dashboard
-* authentication
+I was studying for a security course and kept running into high-level SIEM diagrams without any
+detail on how detection actually works in code. This project helped me understand:
+
+- How logs get ingested and normalized
+- How time-windowed detection works (e.g. counting failed logins over 5 minutes)
+- How pattern matching fits into a rule-based detection engine
+- How alert severity gets determined
+- How Elasticsearch fits into a log storage + search pipeline
+
+It's not production-ready. There's no auth, the detection rules are basic, and the UI is minimal.
+But it does work, and building it taught me more than any article I read on the topic.
 
 ---
 
-not production-ready, but a solid learning project.
+## What I'd add next
+
+- Kafka for streaming log ingestion instead of REST-only
+- More detection rules (port scanning, privilege escalation patterns)
+- Rule configuration through a file or UI, rather than hardcoded
+- Authentication layer
+- Better frontend (the current dashboard is purely functional)
+- Unit tests for the detection logic
+
+---
+
+## Screenshots
+
+See `/screenshots` for the dashboard, alert view, and sample API responses.
