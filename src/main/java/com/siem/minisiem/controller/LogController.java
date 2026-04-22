@@ -41,6 +41,7 @@ public class LogController {
     // ✅ 1. Add single log
     @PostMapping
     public String addLog(@RequestBody LogEntry log) {
+        System.out.println("log received: " + log.getMessage());
         log.setLocation(geoIpService.getLocation(log.getSource()));
         logRepository.save(log);
         logger.info("Ingesting Log: {}", log.getMessage());
@@ -52,6 +53,7 @@ public class LogController {
     // ✅ 2. Add batch logs
     @PostMapping("/batch")
     public String addLogBatch(@RequestBody List<LogEntry> logs) {
+        System.out.println("batch logs received: " + logs.size());
         logger.info("Ingesting batch of {} logs...", logs.size());
         logIngestionService.processBatch(logs);
         return logs.size() + " logs processed";
