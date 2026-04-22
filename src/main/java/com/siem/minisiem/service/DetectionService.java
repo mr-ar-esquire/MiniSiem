@@ -68,3 +68,4 @@ public class DetectionService {
         System.out.println("[ALERT GENERATED] " + severity + " - " + description);
     }
 }
+// TODO: improve detection logic with more advanced rules
