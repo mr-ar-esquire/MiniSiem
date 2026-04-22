@@ -1,3 +1,4 @@
+// index logs into elasticsearch for search and analysis
 package com.siem.minisiem.service;
 
 import com.siem.minisiem.model.EsLogEntry;
