@@ -1,4 +1,4 @@
-
+// brute force detection based on failed login attempts
 package com.siem.minisiem.service;
 import com.siem.minisiem.model.Alert;
 import com.siem.minisiem.model.LogEntry;
