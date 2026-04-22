@@ -42,7 +42,7 @@ public class GeoIpService {
             return "Unknown";
         }
 
-        // 🏠 Internal/private IPs
+        // handle internal/private IP ranges separately
         if (ip.startsWith("192.168.") ||
                 ip.startsWith("10.") ||
                 ip.startsWith("172.") ||
