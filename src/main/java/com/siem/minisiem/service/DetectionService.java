@@ -27,7 +27,7 @@ public class DetectionService {
         String locContent = log.getLocation() != null && !log.getLocation().equals("Unknown") 
             ? " (" + log.getLocation() + ")" : "";
 
-        // 1. SQL Injection Detection
+        // 1. Basic sql injection detection using common patterns (OR, UNION, comments)
         if (message.contains("' or 1=1") || message.contains("--") || message.contains("union select")) {
             createAlertIfNeeded("SQL Injection attempt detected from " + source + locContent, Severity.HIGH);
         }
